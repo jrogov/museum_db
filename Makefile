@@ -1,72 +1,61 @@
-CONTAINER_REGEX = "m?_"
+# CONTAINER_REGEX = "m?_"
 
-M1_CONTAINER = m1_mongo
+# Used in prefixes in docker
+PROJECT_NAME = DB
+
+COMPOSE = docker-compose -p $(PROJECT_NAME)
+DOCKER = docker
+
+
+# Container name (M?_CONTAINER) matches subdirectory name for module-specific files
 M1_IMAGE     = mongo
-M2_DBNAME    = museum
+M1_CONTAINER = mongoc
+M1_DBNAME    = museum
+M1_SHELL     = mongo
+M1_NET_NAME  = db_net_mongo
+M1_PORT      = 27017
+M1_CLEAN     = ./m1_mongo/db
 
-M2_CONTAINER = m2_cassandra
+M2_CONTAINER = cassandrac
 M2_IMAGE     = cassandra
 M2_DBNAME    = museum
+M2_SHELL     = cqlsh
+M2_NET_NAME  = db_net_cassandra
+# Port for Native protocol clients
+M2_PORT      = 9042
+M2_CLEAN     = ./m2_cassandra/db
 
-M3_CONTAINER = m3_neo4j
+M3_CONTAINER = neo4jc
 M3_IMAGE     = neo4j
 M3_DBNAME    = museum
+M3_CLEAN     = ./m3_neo4j/db
 
 
-start: all_init all_reload
+all:
+	$(COMPOSE) up -d
+	# $(DOCKER) exec $(M2_CONTAINER) $(M2_SHELL) -e "SOURCE '/docker-entrypoint-initdb.d/scheme.cql'"
 
-all_init: m1_init m2_init m3_init
-
-m1_init:
-	docker container inspect $(M1_CONTAINER) >/dev/null 2>/dev/null || docker container create --name $(M1_CONTAINER) $(M1_IMAGE)
-
-m2_init:
-	docker container inspect $(M2_CONTAINER) >/dev/null 2>/dev/null || docker container create --name $(M2_CONTAINER) $(M2_IMAGE)
-
-m3_init:
-	docker container inspect $(M3_CONTAINER) >/dev/null 2>/dev/null || docker container create --name $(M3_CONTAINER) $(M3_IMAGE)
-
-
-status:
-	docker container ls --filter "name=$(CONTAINER_REGEX)"
-
-# RELOAD/START RULES	
-
-all_reload: m1_reload m2_reload m3_reload
-
-m1_reload:
-	docker container restart $(M1_CONTAINER)
-
-m2_reload:
-	docker container restart $(M2_CONTAINER)
-
-m3_reload:
-	docker container restart $(M3_CONTAINER)
-
-
-
-# STOP RULES
-
-all_stop: m1_stop m2_stop m3_stop
-
-m1_stop:
-	docker container stop $(M1_CONTAINER)
-
-m2_stop:
-	docker container stop $(M2_CONTAINER)
-
-m3_stop:
-	docker container stop $(M3_CONTAINER)
-
-
-
-# CONNECT WITH CLI CLIENT 
+stop:
+	$(COMPOSE) down
 
 m1_connect:
-	docker run -it --link $(M1_CONTAINER):mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT/"'"$(M1_DBNAME)"
+	$(DOCKER) exec -it $(M1_CONTAINER) $(M1_SHELL) --port $(M1_PORT)
+
+m1_connect_external:
+	$(DOCKER) run -it --net $(M1_NET_NAME) --link $(M1_CONTAINER) $(M1_IMAGE) $(M1_SHELL) $(M1_CONTAINER):$(M1_PORT)
+
+m1_log:
+	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)
+
+clean:
+	$(RM) -r $(M1_CLEAN) $(M2_CLEAN) $(M3_CLEAN)
 
 m2_connect:
-	docker run -it --link $(M2_CONTAINER):cassandra --rm cassandra sh -c 'exec cqlsh "$CASSANDRA_PORT_9042_TCP_ADDR"'
+	$(DOCKER) exec -it $(M2_CONTAINER) $(M2_SHELL) localhost $(M2_PORT)
 
-m3_connect:
-	docker run -ti $(M3_CONTAINER) /var/lib/neo4j/bin/neo4j-shell
+m2_connect_external:
+	$(DOCKER) run -it --net $(M2_NET_NAME) --link $(M2_CONTAINER) $(M2_IMAGE) $(M2_SHELL) $(M2_CONTAINER):$(M2_PORT)
+
+m2_log:
+	# Somehow
+	$(DOCKER) logs $(M2_CONTAINER) | less

@@ -1,0 +1,92 @@
+# TODO
+# mongo: logging from stdout to something BETTER
+# cassandra
+# neo4j
+#
+
+version: "3"
+services:
+
+  # # Server
+  # server:
+  #   image: openjdk:8-jdk-alpine
+  #   volumes:
+  #     # TODO
+  #     # ./server:
+  # networks:
+
+  module1:
+    container_name: mongoc
+    image: mongo
+    # ports:
+    #   - "27017:27017"
+    # expose:
+      # - "27017" # Image Built-in
+    volumes:
+      - ./m1_mongo/db:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command:
+      - 'mongod'
+      - '--config'
+      - '/etc/mongod.conf'
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo   # host name to reach
+
+  module2:
+    container_name: cassandrac
+    image: cassandra
+    # ports:
+      # - "7000:7000"
+      # - ""
+    # expose:
+      # "7000" # Image Built-in
+    volumes:
+      - ./m2_cassandra/db:/var/lib/cassandra
+      - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+      - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      # - ./m2_c/assandra/cassandra.yaml: # Impossible. Config in compose file. Thank you Apache
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS:0.0.0.0
+      # CASSANDRA_BROADCAST_ADDRESS
+      # CASSANDRA_RPC_ADDRESS
+      # CASSANDRA_START_RPC
+    logging:
+      driver: journald
+    networks:
+      net_cassandra:
+        aliases:
+          - cassandra
+
+  # module3:
+  #   container_name: neo4jc
+  #   image: neo4j
+  #   volumes:
+  #     - ./m3_neo4j/db:/var/lib/neo4j/data
+  #     - ./m3_neo4j/schema.cql:/var/lib/neo4j/import/schema.cql
+  #   ports:
+  #     - "7474"
+  #     - "7687"
+  #     # - target: "7474"
+  #     #   published: "7474"
+  #     #   protocol: tcp
+  #     #   mode: host
+  #     # - target: 7687
+  #     # published: 7687
+  #     # protocl: tcp
+  #     # mode: host
+  #   networks:
+  #     net_neo4j:
+  #       aliases:
+  #         - neo4j
+
+networks:
+  net_mongo:
+  net_cassandra:
+  # net_neo4j:
