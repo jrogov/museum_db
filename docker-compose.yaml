@@ -20,8 +20,6 @@ services:
     image: mongo
     # ports:
     #   - "27017:27017"
-    # expose:
-      # - "27017" # Image Built-in
     volumes:
       - ./m1_mongo/db:/data/db
       - ./m1_mongo/mongod.conf:/etc/mongod.conf
@@ -45,8 +43,6 @@ services:
     # ports:
       # - "7000:7000"
       # - ""
-    # expose:
-      # "7000" # Image Built-in
     volumes:
       - ./m2_cassandra/db:/var/lib/cassandra
       - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
@@ -64,29 +60,24 @@ services:
         aliases:
           - cassandra
 
-  # module3:
-  #   container_name: neo4jc
-  #   image: neo4j
-  #   volumes:
-  #     - ./m3_neo4j/db:/var/lib/neo4j/data
-  #     - ./m3_neo4j/schema.cql:/var/lib/neo4j/import/schema.cql
-  #   ports:
-  #     - "7474"
-  #     - "7687"
-  #     # - target: "7474"
-  #     #   published: "7474"
-  #     #   protocol: tcp
-  #     #   mode: host
-  #     # - target: 7687
-  #     # published: 7687
-  #     # protocl: tcp
-  #     # mode: host
-  #   networks:
-  #     net_neo4j:
-  #       aliases:
-  #         - neo4j
+  module3:
+    container_name: neo4jc
+    image: neo4j
+    volumes:
+      - ./m3_neo4j/db:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+      - ./m3_neo4j/neo4j.conf:/conf/neo4j.conf
+    ports:
+      # - "1337:1337" # Shell
+      # - "7473:7473" # Web app (HTTPS)
+      - "7474:7474" # Web app (HTTP)
+      - "7687:7687" # Bolt
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j
 
 networks:
   net_mongo:
   net_cassandra:
-  # net_neo4j:
+  net_neo4j:
