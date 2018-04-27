@@ -85,4 +85,8 @@ m3_browser:
 m3_shell:
 	$(DOCKER) exec -it $(M3_CONTAINER) $(M3_SHELL)
 
+#dont forget sudo
+check_ports:
+	lsof -i | grep docker
+
 .PHONY: all up init_cassandra init_neo4j

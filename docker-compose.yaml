@@ -4,6 +4,10 @@
 # neo4j
 #
 
+# Note: some ports (with TOCOMMENT) are exposed to ease server development,
+#       so server's jar is not to be packed for deploy for container
+#       First write server, then deploy it (and probably die)
+
 version: "3"
 services:
 
@@ -18,8 +22,8 @@ services:
   module1:
     container_name: mongoc
     image: mongo
-    # ports:
-    #   - "27017:27017"
+    ports:
+      - "27017:27017" # TOCOMMENT
     volumes:
       - ./m1_mongo/db:/data/db
       - ./m1_mongo/mongod.conf:/etc/mongod.conf
@@ -40,8 +44,8 @@ services:
   module2:
     container_name: cassandrac
     image: cassandra
-    # ports:
-      # - "7000:7000"
+    ports:
+      - "7000:7000" # TOCOMMENT
       # - ""
     volumes:
       - ./m2_cassandra/db:/var/lib/cassandra
