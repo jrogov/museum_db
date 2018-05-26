@@ -3,6 +3,7 @@ package org.ors.server.service;
 import org.ors.server.dto.*;
 import org.ors.server.entity.CategoryNeo;
 import org.ors.server.entity.ExhibitNeo;
+import org.ors.server.util.exceptions.DataExistsException;
 import org.ors.server.util.exceptions.DataNotFoundException;
 import org.ors.server.entity.AuthorMongo;
 import org.ors.server.entity.AuthorNeo;
@@ -69,8 +70,19 @@ public class AuthorService {
         return newAuthors;
     }
     @Transactional(readOnly = true)
-    public Author getOneById(String id){
-        return new Author(this.mongoRepo.findById(id).get());
+    public Author getOneById(String id)
+        throws DataIntegrityViolationException, DataNotFoundException
+    {
+        return new Author(getOneByIdMongo(id));
+    }
+
+    @Transactional(readOnly = true)
+    public AuthorMongo getOneByIdMongo(String id)
+    throws DataIntegrityViolationException, DataNotFoundException
+    {
+        AuthorMongo authorMongo = this.mongoRepo.findById(id).get();
+        if(authorMongo == null) throw new DataNotFoundException("Author #"+id+" not found");
+        return authorMongo;
     }
 
     @Transactional(readOnly = true)
@@ -138,6 +150,39 @@ public class AuthorService {
         }
         authorNeo = neoRepo.save(authorNeo);
         return new Author(authorNeo);
+    }
+
+    @Transactional(rollbackFor = {DataNotFoundException.class, DataIntegrityViolationException.class})
+    public boolean deleteOneById(String authorId)
+        throws DataNotFoundException, DataIntegrityViolationException, DataExistsException
+    {
+        AuthorMongo authorMongo = getOneByIdMongo(authorId);
+        AuthorNeo authorNeo = getOneByIdNeo(authorId);
+        if( authorNeo.getExhibits().size() != 0 )
+            throw new DataExistsException("Author #"+authorId+" has exhibits present - can not delete");
+        mongoRepo.delete(authorMongo);
+        neoRepo.delete(authorNeo);
+        return true;
+    }
+
+    @Transactional(rollbackFor = {DataNotFoundException.class, DataIntegrityViolationException.class})
+    public Author updateOne(Author author)
+        throws DataNotFoundException, DataIntegrityViolationException
+    {
+        AuthorNeo authorNeo = getOneByIdNeo(author.getId());
+        AuthorMongo authorMongo = getOneByIdMongo(author.getId());
+
+        AuthorNeo newAuthorNeo = new AuthorNeo(author);
+        newAuthorNeo.setId(authorNeo.getId());
+        newAuthorNeo.setCategories(authorNeo.getCategories());
+        newAuthorNeo.setContemporaries(authorNeo.getContemporaries());
+        newAuthorNeo.setExhibits(authorNeo.getExhibits());
+
+        AuthorMongo newAuthorMongo = new AuthorMongo(author);
+
+        neoRepo.save(newAuthorNeo);
+        mongoRepo.save(newAuthorMongo);
+        return new Author(newAuthorNeo);
     }
 
     @Transactional(readOnly = true)

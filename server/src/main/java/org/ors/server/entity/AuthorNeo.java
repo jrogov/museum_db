@@ -4,6 +4,7 @@ import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+import org.ors.server.dto.Author;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,6 +34,11 @@ public class AuthorNeo extends AuthorBase implements IEntity {
 
     public void setMongoid(String mongoid) {
         this.mongoid = mongoid;
+    }
+
+    public AuthorNeo(Author a){
+        super(a);
+        setMongoid(a.getId());
     }
 
     public AuthorNeo(AuthorMongo m){
@@ -82,7 +88,19 @@ public class AuthorNeo extends AuthorBase implements IEntity {
 
     public AuthorNeo() {}
 
-//    public AuthorNeo(AuthorBase b) {
+    public void setContemporaries(Set<AuthorNeo> contemporaries) {
+        this.contemporaries = contemporaries;
+    }
+
+    public void setCategories(Set<CategoryNeo> categories) {
+        this.categories = categories;
+    }
+
+    public void setExhibits(Set<ExhibitNeo> exhibits) {
+        this.exhibits = exhibits;
+    }
+
+    //    public AuthorNeo(AuthorBase b) {
 //        super(b);
 //    }
 

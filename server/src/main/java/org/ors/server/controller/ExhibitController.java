@@ -1,14 +1,12 @@
 package org.ors.server.controller;
 
+import com.sun.xml.internal.bind.v2.model.core.ID;
+import org.ors.server.dto.*;
 import org.ors.server.service.ExhibitService;
 import org.ors.server.util.annotations.GetJsonMapping;
 import org.ors.server.util.annotations.PostJsonMapping;
-import org.ors.server.dto.DTOList;
-import org.ors.server.dto.ErrorDTO;
-import org.ors.server.dto.IDTO;
 import org.ors.server.entity.ExhibitMongo;
 import org.ors.server.entity.ExhibitNeo;
-import org.ors.server.dto.Exhibit;
 import org.ors.server.util.exceptions.DataNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +56,15 @@ public class ExhibitController
             return ResponseEntity.ok(new DTOList<>(exhibitService.addMany(exhibits)));
         }
         catch (DataIntegrityViolationException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+    }
+
+    @PostJsonMapping("/api/exhibit/{id}/place")
+    public ResponseEntity<IDTO> place(@PathVariable String id, @RequestBody Room room){
+        try {
+            return ResponseEntity.ok(exhibitService.relocate(id, room.getId()));
+        } catch (DataNotFoundException e) {
             return ErrorDTO.response(e.getMessage());
         }
     }

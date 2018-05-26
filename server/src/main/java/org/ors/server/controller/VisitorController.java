@@ -3,6 +3,7 @@ package org.ors.server.controller;
 import org.ors.server.dto.DTOList;
 import org.ors.server.dto.ErrorDTO;
 import org.ors.server.dto.IDTO;
+import org.ors.server.dto.VisitDTO;
 import org.ors.server.entity.Visitor;
 import org.ors.server.service.VisitorService;
 import org.ors.server.util.annotations.GetJsonMapping;
@@ -43,6 +44,16 @@ public class VisitorController
     public ResponseEntity<IDTO> getVisitor(@PathVariable String id){
         try{
             return ResponseEntity.ok(visitorService.getOneById(id));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+    }
+
+    @PostJsonMapping("/api/visitor/{id}/visit")
+    public ResponseEntity<IDTO> visit(@PathVariable String id, @RequestBody VisitDTO visit){
+        try{
+            return ResponseEntity.ok(visitorService.visit(id, visit.getTickettype(), visit.getPrice()));
         }
         catch (DataNotFoundException e){
             return ErrorDTO.response(e.getMessage());

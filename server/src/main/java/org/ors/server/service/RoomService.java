@@ -1,7 +1,6 @@
 package org.ors.server.service;
 
 import org.ors.server.dto.Room;
-import org.ors.server.entity.RoomBase;
 import org.ors.server.entity.RoomMongo;
 import org.ors.server.entity.RoomNeo;
 import org.ors.server.repository.RoomMongoRepository;
@@ -51,33 +50,27 @@ public class RoomService {
         return newRoomList;
     }
 
-    @Transactional(rollbackFor = {DataIntegrityViolationException.class, DataNotFoundException.class})
+    @Transactional(readOnly = true, rollbackFor = {DataIntegrityViolationException.class, DataNotFoundException.class})
     public Room getOneById(String id)
+        throws DataIntegrityViolationException, DataNotFoundException
+    {
+        return new Room(getOneByIdNeo(id));
+    }
+
+    @Transactional(readOnly = true, rollbackFor = {DataIntegrityViolationException.class, DataNotFoundException.class})
+    public RoomNeo getOneByIdNeo(String id)
         throws DataIntegrityViolationException, DataNotFoundException
     {
         RoomNeo roomNeo = neoRepo.findByMongoid(id);
         if( roomNeo == null ) throw new DataNotFoundException("Room #" + id + " not found");
-        return new Room(roomNeo);
+        return roomNeo;
     }
 
-    @Transactional(rollbackFor = {DataIntegrityViolationException.class})
+
+    @Transactional(readOnly = true, rollbackFor = {DataIntegrityViolationException.class})
     public List<Room> getAll()
         throws DataIntegrityViolationException
     {
         return mongoRepo.findAll().stream().map(Room::new).collect(Collectors.toList());
-    }
-
-
-    @Transactional
-    public RoomBase addOne(@RequestParam(value="room_id") String id)
-        throws NoSuchElementException
-    {
-        return mongoRepo.findById(id).get();
-    }
-
-    @RequestMapping(value = "/room", method=RequestMethod.POST)
-    public RoomBase add(@RequestParam("name") String name, @RequestParam("schedule") String schedule)
-    {
-        return new RoomBase(name, schedule);
     }
 }

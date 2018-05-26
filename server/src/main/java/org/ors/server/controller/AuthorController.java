@@ -1,13 +1,14 @@
 package org.ors.server.controller;
 
+import com.sun.xml.internal.bind.v2.model.core.ID;
+import org.ors.server.dto.*;
 import org.ors.server.entity.AuthorNeo;
+import org.ors.server.util.annotations.DeleteJsonMapping;
+import org.ors.server.util.annotations.PutJsonMapping;
+import org.ors.server.util.exceptions.DataExistsException;
 import org.ors.server.util.exceptions.DataNotFoundException;
 import org.ors.server.util.annotations.GetJsonMapping;
 import org.ors.server.util.annotations.PostJsonMapping;
-import org.ors.server.dto.Author;
-import org.ors.server.dto.DTOList;
-import org.ors.server.dto.IDTO;
-import org.ors.server.dto.ErrorDTO;
 import org.ors.server.service.AuthorService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,9 @@ public class AuthorController
     {
         try {
             return ResponseEntity.ok(authorService.getOneById(id));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
         }
         catch (NoSuchElementException e){
             return ErrorDTO.response("Author not found");
@@ -116,6 +120,31 @@ public class AuthorController
         }
         catch (DataIntegrityViolationException e){
             return ErrorDTO.response("Wrong request format");
+        }
+    }
+
+    @DeleteJsonMapping("/api/author/{id}")
+    public ResponseEntity<IDTO> deleteAuthor(@PathVariable String id){
+        try {
+            if( authorService.deleteOneById(id) )
+                return MessageDTO.response("Author #"+id+" deleted");
+            return ErrorDTO.response("Deletion of #"+id+" failed");
+        }
+        catch (DataExistsException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+    }
+
+    @PutJsonMapping("/api/author/{id}")
+    public ResponseEntity<IDTO> updateAuthor(@PathVariable String id, @RequestBody Author author){
+        try {
+            author.setId(id);
+            return ResponseEntity.ok(authorService.updateOne(author));
+        } catch (DataNotFoundException e) {
+            return ErrorDTO.response(e.getMessage());
         }
     }
 }

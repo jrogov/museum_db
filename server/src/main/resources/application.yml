@@ -2,7 +2,7 @@
 
 logging:
   level:
-    org.springframework.boot: DEBUG
+    org.springframework.boot: error
 
 spring:
   data:
@@ -11,11 +11,13 @@ spring:
       port: 27017
       database: museum
 
-#    cassandra:
-#      keyspace-name: museum
+    cassandra:
+      keyspace-name: museum
 #      contact-points: cassandra
-#      port: 7000
-#
+      port: 9042
+      schema-action: create_if_not_exists
+
+
     neo4j:
       uri: "bolt://localhost"
       repositories:

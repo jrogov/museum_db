@@ -1,8 +1,11 @@
 package org.ors.server.service;
 
+import org.ors.server.dto.Visit;
+import org.ors.server.entity.VisitCas;
 import org.ors.server.entity.Visitor;
 import org.ors.server.entity.VisitorMongo;
 import org.ors.server.entity.VisitorNeo;
+import org.ors.server.repository.VisitCasRepository;
 import org.ors.server.repository.VisitorMongoRepository;
 import org.ors.server.repository.VisitorNeoRepository;
 import org.ors.server.util.exceptions.DataNotFoundException;
@@ -21,10 +24,13 @@ public class VisitorService {
     private VisitorMongoRepository mongoRepo;
     private VisitorNeoRepository neoRepo;
 
+    private VisitCasRepository visitCasRepo;
+
     @Autowired
-    public VisitorService(VisitorMongoRepository mongoRepo, VisitorNeoRepository neoRepo) {
+    public VisitorService(VisitorMongoRepository mongoRepo, VisitorNeoRepository neoRepo, VisitCasRepository visitCasRepo) {
         this.mongoRepo = mongoRepo;
         this.neoRepo = neoRepo;
+        this.visitCasRepo = visitCasRepo;
     }
 
     @Transactional(rollbackFor = DataIntegrityViolationException.class)
@@ -54,5 +60,14 @@ public class VisitorService {
     @Transactional(readOnly = true)
     public List<Visitor> getAll(){
         return mongoRepo.findAll().stream().map(Visitor::new).collect(Collectors.toList());
+    }
+
+    @Transactional(rollbackFor = {DataIntegrityViolationException.class, DataNotFoundException.class})
+    public Visit visit(String visitorId, String ticketType, Double price)
+        throws DataIntegrityViolationException, DataNotFoundException
+    {
+        Visitor visitor = getOneById(visitorId);
+        VisitCas visitCas = new VisitCas(visitor,ticketType, price);
+        return new Visit(visitCasRepo.save(visitCas));
     }
 }

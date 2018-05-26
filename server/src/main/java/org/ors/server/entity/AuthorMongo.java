@@ -26,5 +26,6 @@ public class AuthorMongo extends AuthorBase implements IEntity
 
     public AuthorMongo(Author a){
         super(a);
+        setId(a.getId());
     }
 }

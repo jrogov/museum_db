@@ -2,11 +2,10 @@ package org.ors.server.service;
 
 import org.ors.server.dto.Author;
 import org.ors.server.dto.Exhibit;
-import org.ors.server.entity.AuthorNeo;
-import org.ors.server.entity.ExhibitMongo;
-import org.ors.server.entity.ExhibitNeo;
+import org.ors.server.entity.*;
 import org.ors.server.repository.ExhibitMongoRepository;
 import org.ors.server.repository.ExhibitNeoRepository;
+import org.ors.server.repository.RelocationCasRepository;
 import org.ors.server.util.exceptions.DataNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,11 +23,16 @@ public class ExhibitService {
     private ExhibitMongoRepository mongoRepo;
     private ExhibitNeoRepository neoRepo;
 
+    private RelocationCasRepository relocationCasRepository;
+
+    private RoomService roomService;
+
     @Autowired
-    public ExhibitService(ExhibitMongoRepository mongoRepo, ExhibitNeoRepository neoRepo)
-    {
+    public ExhibitService(ExhibitMongoRepository mongoRepo, ExhibitNeoRepository neoRepo, RelocationCasRepository relocationCasRepository, RoomService roomService) {
         this.mongoRepo = mongoRepo;
         this.neoRepo = neoRepo;
+        this.relocationCasRepository = relocationCasRepository;
+        this.roomService = roomService;
     }
 
     @Transactional(readOnly = true)
@@ -77,5 +81,35 @@ public class ExhibitService {
     @Transactional(readOnly = true)
     public boolean existsById(String id){
         return neoRepo.existsByMongoid(id) != null;
+    }
+
+//    @Transactional(rollbackFor = { DataIntegrityViolationException.class, DataNotFoundException.class })
+//    public Exhibit place(String exhibitId, String roomId)
+//        throws DataNotFoundException
+//    {
+//        ExhibitNeo exhibitNeo = neoRepo.findByMongoid(exhibitId);
+//        if( exhibitNeo == null ) throw new DataNotFoundException("Exhibit #"+exhibitId+" not found");
+//        RoomNeo roomNeo = roomService.getOneByIdNeo(roomId);
+//        if( roomNeo == null ) throw new DataNotFoundException("Room #"+roomId + " not found");
+//        exhibitNeo.setRoom(roomNeo);
+//        exhibitNeo = neoRepo.save(exhibitNeo);
+//        return new Exhibit(exhibitNeo);
+//    }
+
+    @Transactional(rollbackFor = {DataIntegrityViolationException.class, DataNotFoundException.class})
+    public Exhibit relocate(String exhibitId, String newRoomId)
+        throws DataNotFoundException, DataIntegrityViolationException
+    {
+        String from = "";
+        ExhibitNeo exhibitNeo = neoRepo.findByMongoid(exhibitId);
+        if( exhibitNeo == null ) throw new DataNotFoundException("Exhibit #"+exhibitId+" not found");
+        if( exhibitNeo.getRoom() != null ) from = exhibitNeo.getRoom().getMongoid();
+        RoomNeo roomNeo = roomService.getOneByIdNeo(newRoomId);
+        if( roomNeo == null ) throw new DataNotFoundException("Room #"+newRoomId+ " not found");
+        exhibitNeo.setRoom(roomNeo);
+        RelocationCas relocationCas = new RelocationCas(exhibitId, from, roomNeo.getMongoid());
+        relocationCasRepository.save(relocationCas);
+        exhibitNeo = neoRepo.save(exhibitNeo);
+        return new Exhibit(exhibitNeo);
     }
 }

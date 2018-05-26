@@ -29,6 +29,9 @@ public class ExhibitNeo extends ExhibitBase implements IEntity {
 //    @Relationship(type = "CATEGORY", direction = Relationship.OUTGOING)
 //    List<CategoryNeo> categories = new ArrayList<>();
 
+    @Relationship(type = "LOCATION", direction = Relationship.OUTGOING)
+    private RoomNeo room;
+
     public Set<AuthorNeo> getAuthors() {
         return authors;
     }
@@ -63,6 +66,13 @@ public class ExhibitNeo extends ExhibitBase implements IEntity {
     public ExhibitNeo() {
     }
 
+    public RoomNeo getRoom() {
+        return room;
+    }
+
+    public void setRoom(RoomNeo room) {
+        this.room = room;
+    }
 
     //    public void addCategories(CategoryNeo ... categories){
 //        this.categories.addAll(Arrays.asList(categories));

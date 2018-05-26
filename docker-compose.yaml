@@ -45,15 +45,15 @@ services:
     container_name: cassandrac
     image: cassandra
     ports:
-      - "7000:7000" # TOCOMMENT
+        - "9042:9042" # TOCOMMENT
       # - ""
     volumes:
       - ./m2_cassandra/db:/var/lib/cassandra
       - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
       - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
       # - ./m2_c/assandra/cassandra.yaml: # Impossible. Config in compose file. Thank you Apache
-    environment:
-      - CASSANDRA_LISTEN_ADDRESS:0.0.0.0
+      #environment:
+        #- CASSANDRA_LISTEN_ADDRESS:0.0.0.0
       # CASSANDRA_BROADCAST_ADDRESS
       # CASSANDRA_RPC_ADDRESS
       # CASSANDRA_START_RPC

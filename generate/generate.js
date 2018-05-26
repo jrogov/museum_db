@@ -23,9 +23,9 @@ function api(method, url, body, callback){
         url: serverUrl + url
     }
 
-    if( method != GET )
+    if( method != GET && body != null )
         r.json = body
-    console.log(body)
+    // console.log(body)
 
     request(r, callback)
 }
@@ -34,12 +34,18 @@ function api(method, url, body, callback){
  * RANDOM VALUE GENERATORS CONFIG
  */
 
-const N = 10;
-authors_num = exhibit_num = max_materials = visitor_num = hall_num = tour_num = tour_max_len = N
+const N = 100;
+authors_num = exhibit_num = visitor_num = hall_num = tour_num = tour_max_len = N
+
+// const authors_num = 100
+// const exhibit_num = 1000
+// const visitor_num = 19000
+// const hall_num = 200
+// const tour_num = 5
+// const tour_max_len = 1
 
 // const authors_num = 10000
 // const exhibit_num = 100000
-// const max_materials = 5
 // const visitor_num = 1900000
 // const hall_num = 2000
 // const tour_num = 50
@@ -155,7 +161,8 @@ function emit(num, f){
 
 function errcb(e,r,b)
 {
-    if(e) console.err(e)
+    if(e) return console.error(e);
+    if(b.errorMsg) return console.error(b.errorMsg);
 }
 
 // Categories
@@ -164,10 +171,10 @@ api(
     '/category/many',
     category_names.map( (n) => { return { name : n };}),
     (e,r,b) => {
-        if(e) return console.err(e);
+        if(e) return console.error(e);
 
 var categories = b;
-console.log(categories)
+// console.log(categories)
 
 // Authors
 api(
@@ -181,10 +188,10 @@ api(
         };
     }),
     (e,r,b) => {
-        if(e) return console.err(e)
+        if(e) return console.error(e)
 
 var authors = b;
-console.log(authors)
+// console.log(authors)
 
 // Exhibits
 api(
@@ -193,16 +200,16 @@ api(
     emit(exhibit_num, () => {
         return {
                 name: getExhibitName(),
-                materials: getFewElements(materials, (getRandInt(0, max_materials))),
+                materials: materials,
                 creationdate: getDateExhibit()
             };
         }
     ),
     (e,r,b) => {
-        if(e) return console.err(e);
+        if(e) return console.error(e);
 
 var exhibits = b;
-console.log(exhibits)
+// console.log(exhibits)
 
 // Connect Authors, Categories and Exhibits
 // Works = Exhibits
@@ -236,10 +243,22 @@ api(POST,
         }
     }),
     (e,r,b) =>{
-        if(e) console.err(e)
+        if(e) console.error(e)
 
 var rooms = b
-console.log(rooms)
+// console.log(rooms)
+
+// Place exhibits in rooms
+// ASYNCHRONOUSLY
+// Deadlock possible :(
+exhibits.forEach((exhibit) =>
+{
+    api(POST, '/exhibit/'+exhibit.id+'/place',
+        { id: getElement(rooms).id },
+        errcb
+    )
+})
+
 
 api(POST,
     '/visitor/many',
@@ -250,10 +269,25 @@ api(POST,
         }
     }),
     (e,r,b) => {
-        if(e) console.err(e)
+        if(e) console.error(e)
 
 var visitors = b
-console.log(visitors)
+// console.log(visitors)
+
+// Visit once
+// ASYNCHRONOUSLY
+visitors.forEach((visitor) => {
+    api(POST,
+        '/visitor/'+visitor.id+'/visit',
+        {
+            visitorid: visitor.id,
+            tickettype: getTicketType(),
+            price: getRandom(500, 1000)
+        },
+        errcb
+    )
+})
+
 
 })
 })
@@ -269,7 +303,7 @@ console.log(visitors)
 //     POST,
 //     '/author/many',
 //     emit(10, () => { return {name: getName(), country: getCountry(), birthdate: getDateBirth()}; }),
-//     (e,r,b) => { if(e) return console.err(e); console.log(b); }
+//     (e,r,b) => { if(e) return console.error(e); console.log(b); }
 //     )
 
 // api(
@@ -280,7 +314,7 @@ console.log(visitors)
 //         materials: getFewElements(materials, 3),
 //         creationdate: getDateExhibit()
 //     }}),
-//     (e,r,b) => { if(e) return console.err(e); console.log(b)})
+//     (e,r,b) => { if(e) return console.error(e); console.log(b)})
 
 //------------------------------------------------------------------------------
 
@@ -310,28 +344,28 @@ console.log(visitors)
 //     }
 // )
 
-// //api(POST, '/author', {
-// //         name: "Gyro",
-// //         country: "UK",
-// //         birthdate: "BEST DAY"
-// //     },
-// //     (error, response, body) => {
-// //         if (error) {
-// //             return console.error(error);
-// //         }
-// //         console.log(body)
-// //         console.log('Added author '+body.id)
-// //         //authors_id.push(body.id)
-// //
-// //         api(GET, '/author/' + body.id, '',
-// //            (error, response, body) => {
-// //                 if (error) {
-// //                   return console.error(error);
-// //                 }
-// //                 console.log(body)
-// //             }
-// //        );
-// //})
+// api(POST, '/author', {
+//         name: "Gyro",
+//         country: "UK",
+//         birthdate: "BEST DAY"
+//     },
+//     (error, response, body) => {
+//         if (error) {
+//             return console.error(error);
+//         }
+//         console.log(body)
+//         console.log('Added author '+body.id)
+//         //authors_id.push(body.id)
+
+//        //  api(GET, '/author/' + body.id, '',
+//        //     (error, response, body) => {
+//        //          if (error) {
+//        //            return console.error(error);
+//        //          }
+//        //          console.log(body)
+//        //      }
+//        // );
+// })
 
 //  api(GET, '/category'+ '/Humbaga', null, (e,r,b) => console.log('Humbaga found: ' + b ));
 //  api(POST, '/category', {name: 'Humbaga'}, (e,r,b) => { console.log('Humbaga added: '); console.log(b);} );

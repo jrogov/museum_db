@@ -3,7 +3,10 @@ package org.ors.server.entity;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Relationship;
 import org.ors.server.dto.Room;
+
+import java.util.Set;
 
 @NodeEntity(label = "Room")
 public class RoomNeo extends RoomBase implements IEntity {
@@ -13,6 +16,12 @@ public class RoomNeo extends RoomBase implements IEntity {
     private Long id;
 
     private String mongoid;
+
+    @Relationship(type = "LOCATION", direction = Relationship.INCOMING)
+    private Set<ExhibitNeo> exhibits;
+
+    public RoomNeo() {
+    }
 
     public RoomNeo(RoomNeo n){
         super(n);
