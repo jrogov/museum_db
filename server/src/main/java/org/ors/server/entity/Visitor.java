@@ -1,22 +1,39 @@
 package org.ors.server.entity;
 
+import org.ors.server.dto.IDTO;
 import org.springframework.data.annotation.Id;
 
-public class Visitor
+public class Visitor extends VisitorBase implements IDTO
 {
-    @Id
     private String id;
-    private String name, type;
-    
-    public Visitor(String name, String type)
-    {
-        setName(name);
-        setType(type);
+
+    public Visitor() {
     }
-    
-    public String getName() { return this.name; }
-    public String getType() { return this.type; }
-    
-    public void setName(String name) { this.name = name; }
-    public void setType(String type) { this.type = type; }
+
+    public Visitor(VisitorMongo m){
+        super(m);
+        setId(m.getId());
+    }
+
+    public Visitor(VisitorNeo n){
+        super(n);
+        setId(n.getMongoid());
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "Visitor{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", type='" + type + '\'' +
+            '}';
+    }
 }

@@ -1,14 +1,18 @@
 package org.ors.server.entity;
 
-import org.springframework.data.annotation.Id;
-
-public class Room
+public class RoomBase
 {
-    @Id
-    private String id;
     private String name, schedule;
-    
-    public Room(String name, String schedule)
+
+    public RoomBase() {
+    }
+
+    protected RoomBase(RoomBase b) {
+        setName(b.getName());
+        setSchedule(b.getSchedule());
+    }
+
+    public RoomBase(String name, String schedule)
     {
         this.name = name;
         this.schedule = schedule;

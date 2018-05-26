@@ -1,7 +1,9 @@
 # CONTAINER_REGEX = "m?_"
 
 # Used in prefixes in docker
-PROJECT_NAME = DB
+PROJECT_NAME := DB
+#lowercase for network names
+PROJECT_NAME_LC := db
 
 COMPOSE = docker-compose -p $(PROJECT_NAME)
 DOCKER = docker
@@ -13,7 +15,7 @@ M1_IMAGE     = mongo
 M1_CONTAINER = mongoc
 M1_DBNAME    = museum
 M1_SHELL     = mongo
-M1_NET_NAME  = $(PROJECT_NAME)_net_mongo
+M1_NET_NAME  = $(PROJECT_NAME_LC)_net_mongo
 M1_PORT      = 27017
 M1_CLEAN     = $(M1_BASEDIR)/db
 
@@ -22,7 +24,7 @@ M2_CONTAINER = cassandrac
 M2_IMAGE     = cassandra
 M2_DBNAME    = museum
 M2_SHELL     = cqlsh
-M2_NET_NAME  = $(PROJECT_NAME)_net_cassandra
+M2_NET_NAME  = $(PROJECT_NAME_LC))_net_cassandra
 # Port for Native protocol clients
 M2_PORT      = 9042
 M2_CLEAN     = $(M2_BASEDIR)/db
@@ -36,10 +38,13 @@ M3_DBNAME    = museum
 M3_CLEAN     = $(M3_BASEDIR)/db
 M3_PORT_WEB  = 7474
 M3_PORT      = 1337
-M3_NET_NAME  = $(PROJECT_NAME)_net_neo4j
+M3_NET_NAME  = $(PROJECT_NAME_LC))_net_neo4j
 
 
 all: up init_cassandra init_neo4j
+
+generate:
+	nodejs generate/generate.js
 
 up:
 	$(COMPOSE) up -d
@@ -57,17 +62,23 @@ init_neo4j:
 stop:
 	$(COMPOSE) down
 
+m1_restart:
+	$(COMPOSE) restart module1
+
 m1_shell:
-	$(DOCKER) exec -it $(M1_CONTAINER) $(M1_SHELL) --port $(M1_PORT)
+	$(DOCKER) exec -it $(M1_CONTAINER) $(M1_SHELL) --port $(M1_PORT) $(M1_DBNAME)
 
 m1_shell_external:
-	$(DOCKER) run -it --net $(M1_NET_NAME) --link $(M1_CONTAINER) $(M1_IMAGE) $(M1_SHELL) $(M1_CONTAINER):$(M1_PORT)
+	$(DOCKER) run -it --net $(M1_NET_NAME) --link $(M1_CONTAINER) $(M1_IMAGE) $(M1_SHELL) $(M1_CONTAINER):$(M1_PORT) $(M1_DBNAME)
 
 m1_log:
 	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)
 
 clean:
 	$(RM) -r $(M1_CLEAN) $(M2_CLEAN) $(M3_CLEAN)
+
+m2_restart:
+	$(COMPOSE) restart module2
 
 m2_shell:
 	$(DOCKER) exec -it $(M2_CONTAINER) $(M2_SHELL) localhost $(M2_PORT)
@@ -79,6 +90,9 @@ m2_log:
 	# Somehow
 	$(DOCKER) logs $(M2_CONTAINER) | less
 
+m3_restart:
+	$(COMPOSE) restart module3
+
 m3_browser:
 	xdg-open http://localhost:$(M3_PORT_WEB)
 
@@ -89,4 +103,4 @@ m3_shell:
 check_ports:
 	lsof -i | grep docker
 
-.PHONY: all up init_cassandra init_neo4j
+.PHONY: all up init_cassandra init_neo4j generate

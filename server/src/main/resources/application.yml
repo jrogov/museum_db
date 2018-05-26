@@ -1,0 +1,27 @@
+# https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+
+logging:
+  level:
+    org.springframework.boot: DEBUG
+
+spring:
+  data:
+    mongodb:
+      host: mongo
+      port: 27017
+      database: museum
+
+#    cassandra:
+#      keyspace-name: museum
+#      contact-points: cassandra
+#      port: 7000
+#
+    neo4j:
+      uri: "bolt://localhost"
+      repositories:
+        enabled: true
+#      uri: "neo4j:7687" # Bolt port. May be different?
+#      auto-index: validate # what is it?
+#spring.data.neo4j.username=neo4j
+#spring.data.neo4j.password=secret
+

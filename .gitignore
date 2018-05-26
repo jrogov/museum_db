@@ -1,1 +1,5 @@
 db
+server/target
+server/.idea/*
+!server/.idea/artifacts
+generate/node_modules

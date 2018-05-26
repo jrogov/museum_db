@@ -1,30 +1,121 @@
 package org.ors.server.controller;
 
-import org.ors.server.repository.AuthorRepository;
-import org.ors.server.entity.Author;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.ors.server.entity.AuthorNeo;
+import org.ors.server.util.exceptions.DataNotFoundException;
+import org.ors.server.util.annotations.GetJsonMapping;
+import org.ors.server.util.annotations.PostJsonMapping;
+import org.ors.server.dto.Author;
+import org.ors.server.dto.DTOList;
+import org.ors.server.dto.IDTO;
+import org.ors.server.dto.ErrorDTO;
+import org.ors.server.service.AuthorService;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.NoSuchElementException;
+import java.util.*;
+
+/*
+* Use as a reference implementation of REST API methods for this project
+* */
 
 @RestController
 public class AuthorController
 {
-    private AuthorRepository repo;
-    
+    private AuthorService authorService;
+
     @Autowired
-    public AuthorController(AuthorRepository repo)
-    {
-        this.repo = repo;
+    private AuthorController(AuthorService authorService) {
+        this.authorService = authorService;
     }
-    
-    @RequestMapping(value="/author", method=RequestMethod.GET)
-    public Author get(@RequestParam("id") String id) throws NoSuchElementException
-    {
-        return this.repo.findById(id).get();
+
+    /*
+    * Get all authors
+    * */
+    @GetJsonMapping("/api/author")
+    public ResponseEntity<IDTO> getAllAuthors(){
+        return ResponseEntity.ok(new DTOList<>(authorService.getAll()));
     }
-    
+
+    @GetJsonMapping("/api/author/{id}")
+    public ResponseEntity<IDTO> getAuthor(@PathVariable String id)
+    {
+        try {
+            return ResponseEntity.ok(authorService.getOneById(id));
+        }
+        catch (NoSuchElementException e){
+            return ErrorDTO.response("Author not found");
+        }
+    }
+
+    @PostJsonMapping("/api/author")
+    public ResponseEntity<IDTO> postAuthor(@RequestBody Author author) {
+        try{
+            return ResponseEntity.ok(authorService.addOne(author));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e){
+            return ErrorDTO.response("Wrong request format: "+author);
+        }
+    }
+
+    @PostJsonMapping("/api/author/many")
+    public ResponseEntity<IDTO> postAuthors(@RequestBody DTOList<Author> authors) {
+        try {
+            return ResponseEntity.ok(
+                new DTOList<>(authorService.addMany(authors))
+            );
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e){
+            return ErrorDTO.response("Wrong request format");
+        }
+    }
+
+    @PostJsonMapping("/api/author/{id}/contemporaries")
+    public ResponseEntity<IDTO> postContemporaries(@PathVariable String id, @RequestBody DTOList<String> contemporariesIds){
+
+        try{
+            return ResponseEntity.ok(
+                authorService.addContemporaries(id, contemporariesIds)
+            );
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e){
+            return ErrorDTO.response("Wrong request format");
+        }
+    }
+
+    @PostJsonMapping("/api/author/{id}/works")
+    public ResponseEntity<IDTO> postWorks(@PathVariable String id, @RequestBody DTOList<String> exhibitIds){
+        try{
+            return ResponseEntity.ok(authorService.addExhibits(id, exhibitIds));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e){
+            return ErrorDTO.response("Wrong request format");
+        }
+    }
+
+    @PostJsonMapping("/api/author/{id}/categories")
+    public ResponseEntity<IDTO> postCategories(@PathVariable String id, @RequestBody DTOList<String> categoryNames){
+        try{
+            return ResponseEntity.ok(authorService.addCategories(id, categoryNames));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e){
+            return ErrorDTO.response("Wrong request format");
+        }
+    }
 }

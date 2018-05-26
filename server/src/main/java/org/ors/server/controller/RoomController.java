@@ -1,35 +1,52 @@
 package org.ors.server.controller;
 
-import org.ors.server.repository.RoomRepository;
-import org.ors.server.entity.Room;
+import org.ors.server.dto.DTOList;
+import org.ors.server.dto.ErrorDTO;
+import org.ors.server.dto.IDTO;
+import org.ors.server.dto.Room;
+import org.ors.server.service.RoomService;
+import org.ors.server.util.annotations.GetJsonMapping;
+import org.ors.server.util.annotations.PostJsonMapping;
+import org.ors.server.util.exceptions.DataNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.NoSuchElementException;
 
 @RestController
 public class RoomController
 {
-    private RoomRepository repo;
-    
+    RoomService roomService;
+
     @Autowired
-    public RoomController(RoomRepository repo)
-    {
-        this.repo = repo;
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
     }
-    
-    @RequestMapping(value = "/room", method=RequestMethod.GET)
-    public Room get(@RequestParam(value="room_id") String id) throws NoSuchElementException
-    {
-        return repo.findById(id).get();
+
+    @PostJsonMapping("/api/room")
+    public ResponseEntity<IDTO> addRoom(@RequestBody Room r){
+        return ResponseEntity.ok(roomService.addOne(r));
     }
-    
-    @RequestMapping(value = "/room", method=RequestMethod.POST)
-    public Room add(@RequestParam("name") String name, @RequestParam("schedule") String schedule)
-    {
-        return new Room(name, schedule);
+
+    @PostJsonMapping("/api/room/many")
+    public ResponseEntity<IDTO> addRooms(@RequestBody DTOList<Room> roomList){
+        return ResponseEntity.ok(new DTOList<>(roomService.addMany(roomList)));
+    }
+
+    @GetJsonMapping("/api/room")
+    public ResponseEntity<IDTO> getAllRooms(){
+        return ResponseEntity.ok(new DTOList<>(roomService.getAll()));
+    }
+
+    @GetJsonMapping("/api/room/{id}")
+    public ResponseEntity<IDTO> getRoom(@PathVariable String id){
+        try{
+            return ResponseEntity.ok(roomService.getOneById(id));
+        }
+        catch (DataNotFoundException e){
+            return ErrorDTO.response(e.getMessage());
+        }
     }
 }
