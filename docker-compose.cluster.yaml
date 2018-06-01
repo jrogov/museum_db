@@ -1,0 +1,123 @@
+# TODO
+# mongo: logging from stdout to something BETTER
+# cassandra
+# neo4j
+#
+
+# Note: some ports (with TOCOMMENT) are exposed to ease server development,
+#       so server's jar is not to be packed for deploy for container
+#       First write server, then deploy it (and probably die)
+
+version: "3"
+services:
+
+  # # Server
+  # server:
+  #   image: openjdk:8-jdk-alpine
+  #   volumes:
+  #     # TODO
+  #     # ./server:
+  # networks:
+
+  module1_1:
+    container_name: mongoc1
+    image: mongo
+    ports:
+      - "27017:27017" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db1:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+      - ./m1_mongo/configure-rs.js:/etc/configure-rs.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27017
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo1   # host name to reach
+
+  module1_2:
+    container_name: mongoc2
+    image: mongo
+    ports:
+      - "27027:27027" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db2:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27027
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo2   # host name to reach
+
+  module1_3:
+    container_name: mongoc3
+    image: mongo
+    ports:
+      - "27037:27037" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db3:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27037
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo3   # host name to reach
+
+  module2:
+    container_name: cassandrac
+    image: cassandra
+    ports:
+        - "9042:9042" # TOCOMMENT
+      # - ""
+    volumes:
+      - ./m2_cassandra/db:/var/lib/cassandra
+      - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+      - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      # - ./m2_c/assandra/cassandra.yaml: # Impossible. Config in compose file. Thank you Apache
+      #environment:
+        #- CASSANDRA_LISTEN_ADDRESS:0.0.0.0
+      # CASSANDRA_BROADCAST_ADDRESS
+      # CASSANDRA_RPC_ADDRESS
+      # CASSANDRA_START_RPC
+    logging:
+      driver: journald
+    networks:
+      net_cassandra:
+        aliases:
+          - cassandra
+
+  module3:
+    container_name: neo4jc
+    image: neo4j
+    volumes:
+      - ./m3_neo4j/db:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+      - ./m3_neo4j/neo4j.conf:/conf/neo4j.conf
+    ports:
+      # - "1337:1337" # Shell
+      # - "7473:7473" # Web app (HTTPS)
+      - "7474:7474" # Web app (HTTP)
+      - "7687:7687" # Bolt
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j
+
+networks:
+  net_mongo:
+  net_cassandra:
+  net_neo4j:
