@@ -1,11 +1,17 @@
 package org.ors.server.entity;
 
 import org.ors.server.dto.IDTO;
+import org.ors.server.dto.Interest;
 import org.springframework.data.annotation.Id;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Visitor extends VisitorBase implements IDTO
 {
     private String id;
+
+    List<Interest> interests;
 
     public Visitor() {
     }
@@ -18,6 +24,15 @@ public class Visitor extends VisitorBase implements IDTO
     public Visitor(VisitorNeo n){
         super(n);
         setId(n.getMongoid());
+        setInterests(n.getInterests().stream().map(Interest::new).collect(Collectors.toList()));
+    }
+
+    public List<Interest> getInterests() {
+        return interests;
+    }
+
+    public void setInterests(List<Interest> interests) {
+        this.interests = interests;
     }
 
     public String getId() {

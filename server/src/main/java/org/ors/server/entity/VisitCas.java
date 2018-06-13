@@ -16,24 +16,34 @@ public class VisitCas implements IEntity {
     private String date;
     private String tickettype;
     private Double price;
+    private String excursionid;
 
     public VisitCas() {
     }
 
-    public VisitCas(Visitor v, String tickettype, Double price){
-        this(v.getId(), tickettype, price);
+    public VisitCas(Visitor v, String tickettype, Double price, String excursionid){
+        this(v.getId(), tickettype, price, excursionid);
 //        setId(date+"_"+visitorid);
 //        setVisitorid(v.getId());
 //        setTickettype(tickettype);
 //        setPrice(price);
     }
 
-    public VisitCas(String visitorid, String tickettype, Double price) {
+    public VisitCas(String visitorid, String tickettype, Double price, String excursionid) {
         setDate(Long.toString(new Date().getTime()));
         this.id = getDate()+"_"+visitorid;
         this.visitorid = visitorid;
         this.tickettype = tickettype;
         this.price = price;
+        this.excursionid = excursionid;
+    }
+
+    public String getExcursionid() {
+        return excursionid;
+    }
+
+    public void setExcursionid(String excursionid) {
+        this.excursionid = excursionid;
     }
 
     public String getId() {

@@ -37,7 +37,16 @@ public class CategoryNeo implements IEntity {
         setName(c.getName());
     }
 
-    //    @Relationship(type="CATEGORY", direction = Relationship.INCOMING)
-//    private List<ExhibitNeo> exhibits = new ArrayList<>();
+    public int compareTo(Category c){
+        return getName().compareTo(c.getName());
+    }
+
+    @Override
+    public String toString() {
+        return "CategoryNeo{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            '}';
+    }
 
 }

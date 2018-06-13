@@ -53,10 +53,21 @@ public class VisitorController
     @PostJsonMapping("/api/visitor/{id}/visit")
     public ResponseEntity<IDTO> visit(@PathVariable String id, @RequestBody VisitDTO visit){
         try{
-            return ResponseEntity.ok(visitorService.visit(id, visit.getTickettype(), visit.getPrice()));
+            System.out.println(id + " visits:" + visit);
+            return ResponseEntity.ok(visitorService.visit(id, visit.getTickettype(), visit.getPrice(), visit.getExcursionid()));
         }
         catch (DataNotFoundException e){
             return ErrorDTO.response(e.getMessage());
         }
     }
+
+    @GetJsonMapping("/api/visitor/{id}/interests/{name}")
+    public ResponseEntity<IDTO> checkInterest(@PathVariable String id, @PathVariable String name){
+        try{
+            return ResponseEntity.ok(visitorService.checkInterestByName(id, name));
+        } catch (DataNotFoundException e) {
+            return ErrorDTO.response(e.getMessage());
+        }
+    }
+
 }

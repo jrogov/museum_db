@@ -7,6 +7,7 @@ public class Visit implements IDTO {
     private String date;
     private String tickettype;
     private Double price;
+    private String excursionid;
 
     public Visit() {
     }
@@ -16,6 +17,7 @@ public class Visit implements IDTO {
         setDate(c.getDate());
         setTickettype(c.getTickettype());
         setPrice(c.getPrice());
+        setExcursionid(c.getExcursionid());
     }
 
     public String getVisitorid() {
@@ -48,5 +50,13 @@ public class Visit implements IDTO {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public String getExcursionid() {
+        return excursionid;
+    }
+
+    public void setExcursionid(String excursionid) {
+        this.excursionid = excursionid;
     }
 }

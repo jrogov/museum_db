@@ -23,4 +23,10 @@ public class Category implements IDTO {
         setName(n.getName());
     }
 
+    @Override
+    public String toString() {
+        return "Category{" +
+            "name='" + name + '\'' +
+            '}';
+    }
 }

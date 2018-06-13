@@ -4,14 +4,16 @@ public class VisitDTO implements IDTO {
     private String visitorid;
     private String tickettype;
     private Double price;
+    private String excursionid;
 
     public VisitDTO() {
     }
 
-    public VisitDTO(String visitorid, String tickettype, Double price) {
+    public VisitDTO(String visitorid, String tickettype, Double price, String excursionid) {
         this.visitorid = visitorid;
         this.tickettype = tickettype;
         this.price = price;
+        this.excursionid = excursionid;
     }
 
     public String getVisitorid() {
@@ -36,5 +38,23 @@ public class VisitDTO implements IDTO {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public String getExcursionid() {
+        return excursionid;
+    }
+
+    public void setExcursionid(String excursionid) {
+        this.excursionid = excursionid;
+    }
+
+    @Override
+    public String toString() {
+        return "VisitDTO{" +
+            "visitorid='" + visitorid + '\'' +
+            ", tickettype='" + tickettype + '\'' +
+            ", price=" + price +
+            ", excursionid='" + excursionid + '\'' +
+            '}';
     }
 }
