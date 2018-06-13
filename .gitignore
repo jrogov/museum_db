@@ -1,4 +1,5 @@
-db
+db*
+arb*
 server/target
 server/.idea/*
 !server/.idea/artifacts

@@ -7,21 +7,31 @@ logging:
 spring:
   data:
     mongodb:
-      host: mongo
-      port: 27017
-      database: museum
+      # connection to replicas configured automatically
+#      host: mongo1
+#      port: 27017
+#      database: museum
+      uri: "mongodb://mongo1:27017,mongo2:27117,mongo3:27217/museum"
 
     cassandra:
+      contact-points: cassandra1
       keyspace-name: museum
-#      contact-points: cassandra
       port: 9042
       schema-action: create_if_not_exists
+      cluster-name: cas_cluster
+      # https://cassandra.apache.org/doc/latest/architecture/dynamo.html
+      consistency-level: local_one
 
 
     neo4j:
       uri: "bolt://localhost"
+#      uri: "bolt://neo4j1:7474"
+#      uri: "bolt-routing://neo4j1:7474"
       repositories:
         enabled: true
+#      username: neo4j
+#      password: changeme
+
 #      uri: "neo4j:7687" # Bolt port. May be different?
 #      auto-index: validate # what is it?
 #spring.data.neo4j.username=neo4j

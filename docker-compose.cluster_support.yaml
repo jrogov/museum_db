@@ -1,0 +1,44 @@
+# Support Cluster
+# Does not carry any data. The only function is to support main clusters
+# e.g. complement mongo cluster num to even number (4) so only 1 alive cluster can complete elections
+
+version: "3"
+services:
+  module1sup1:
+    container_name: mongocsup1
+    image: mongo
+    ports:
+      - "27317:27317"
+    volumes:
+      - ./m1_mongo/arb1:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --replSet rs --port 27317 -v --bind_ip_all
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongosup1
+  module1sup2:
+    container_name: mongocsup2
+    image: mongo
+    ports:
+      - "27417:27417"
+    volumes:
+      - ./m1_mongo/arb2:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --replSet rs --port 27417 -v --bind_ip_all
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongosup2
+
+networks:
+  net_mongo:
+    external:
+      name: db_net_mongo
+

@@ -5,130 +5,212 @@ PROJECT_NAME := DB
 #lowercase for network names
 PROJECT_NAME_LC := db
 
-COMPOSE_FILE = docker-compose.cluster.yaml
-COMPOSE = docker-compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE)
+COMPOSE_NET = docker-compose -p $(PROJECT_NAME) -f docker-compose.network.yaml
+COMPOSE_CL1 = docker-compose -p $(PROJECT_NAME) -f docker-compose.cluster_1.yaml
+COMPOSE_CL2 = docker-compose -p $(PROJECT_NAME) -f docker-compose.cluster_2.yaml
+COMPOSE_CL3 = docker-compose -p $(PROJECT_NAME) -f docker-compose.cluster_3.yaml
+COMPOSE_CLS = docker-compose -p $(PROJECT_NAME) -f docker-compose.cluster_support.yaml
+COMPOSE_SRV = docker-compose -p $(PROJECT_NAME) -f docker-compose.server.yaml
+#COMPOSE = docker-compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE)
 DOCKER = docker
 
 
 # Container name (M?_CONTAINER) matches subdirectory name for module-specific files
-M1_BASEDIR 	 = ./m1_mongo
-M1_IMAGE     = mongo
-M1_CONTAINER = mongoc
-M1_DBNAME    = museum
-M1_SHELL     = mongo
-M1_NET_NAME  = $(PROJECT_NAME_LC)_net_mongo
-M1_PORT      = 27017
-M1_CLEAN     = $(M1_BASEDIR)/db
+M1_BASEDIR    = ./m1_mongo
+M1_CONTAINER  = mongoc
+M1_DBNAME     = museum
+M1_SHELL      = mongo
+M1_NET_NAME   = $(PROJECT_NAME_LC)_net_mongo
+M11_PORT      = 27017
+M12_PORT      = 27117
+M13_PORT      = 27217
+M1_CLEAN      = $(M1_BASEDIR)/db
 
-M2_BASEDIR   = ./m2_cassandra
-M2_CONTAINER = cassandrac
-M2_IMAGE     = cassandra
-M2_DBNAME    = museum
-M2_SHELL     = cqlsh
-M2_NET_NAME  = $(PROJECT_NAME_LC)_net_cassandra
+M2_BASEDIR    = ./m2_cassandra
+M2_CONTAINER  = cassandrac
+M2_DBNAME     = museum
+M2_SHELL      = cqlsh
+M2_NET_NAME   = $(PROJECT_NAME_LC)_net_cassandra
 # Port for Native protocol clients
-M2_PORT      = 9042
-M2_CLEAN     = $(M2_BASEDIR)/db
+M21_PORT      = 9042
+M22_PORT      = 9042 # 9142
+M23_PORT      = 9042 # 9242
+M2_CLEAN      = $(M2_BASEDIR)/db
 
-M3_BASEDIR   = ./m3_neo4j
-M3_CONTAINER = neo4jc
-M3_SHELL	 = cypher-shell
-M3_SCHEMA    = $(M3_BASEDIR)/schema.cql
-M3_IMAGE     = neo4j
-M3_DBNAME    = museum
-M3_CLEAN     = $(M3_BASEDIR)/db
-M3_PORT_WEB  = 7474
-M3_PORT      = 1337
-M3_NET_NAME  = $(PROJECT_NAME_LC)_net_neo4j
+M3_BASEDIR    = ./m3_neo4j
+M3_CONTAINER  = neo4jc
+M3_SHELL      = cypher-shell
+M3_SCHEMA     = $(M3_BASEDIR)/schema.cql
+M3_DBNAME     = museum
+M3_CLEAN      = $(M3_BASEDIR)/db
+M31_PORT_WEB  = 7474
+M32_PORT_WEB  = 7574
+M33_PORT_WEB  = 7674
+M2_NET_NAME   = $(PROJECT_NAME_LC)_net_neo4j
 
 
-all: up init_mongo init_cassandra init_neo4j
+all: db_up init_mongo init_cassandra init_neo4j srv_up
+
+# GENERATE
 
 generate:
 	# nodejs generate/generate.js
 	cd generate && ./generate.py
 
-up:
-	$(COMPOSE) up -d
+# UP
+
+db_up: net_up c1_up c2_up c3_up cs_up
+
+net_up:
+	$(COMPOSE_NET) up -d
+
+c1_up:
+	$(COMPOSE_CL1) up -d
+	
+c2_up:
+	$(COMPOSE_CL2) up -d
+	
+c3_up:
+	$(COMPOSE_CL3) up -d
+	
+cs_up:
+	$(COMPOSE_CLS) up -d
+
+srv_up:
+	#$(COMPOSE_SRV) up -d
+
+# INIT
 
 init_mongo:
-	$(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port $(M1_PORT) $(M1_DBNAME) /etc/configure-rs.js
+	sleep 10 && $(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port $(M11_PORT) $(M1_DBNAME) /etc/configure-rs.js
 
-# Not used as was implemented with entrypoint shell script
-# Inited at startup
 init_cassandra:
-	# $(DOCKER) exec $(M2_CONTAINER) $(M2_SHELL) -e "SOURCE '/docker-entrypoint-initdb.d/scheme.cql'"
+	# no init for cassandra
 
-# NO SCHEMAS FOR NEO4J
-# NOSQL 4 NOLIFE
 init_neo4j:
-	# $(DOCKER) exec -it $(M3_CONTAINER) $(M3_SHELL) < $(M3_SCHEMA)
+	# no init for neo4j
 
-stop:
-	$(COMPOSE) down
+# STOP
+	
+stop: c1_down c2_down c3_down cs_down srv_down
+	$(COMPOSE_NET) down
 
-m1_restart:
-	$(COMPOSE) restart module1
+c1_down:
+	$(COMPOSE_CL1) down
 
-m1_shell:
-	$(DOCKER) exec -it $(M1_CONTAINER) $(M1_SHELL) --port $(M1_PORT) $(M1_DBNAME)
+c2_down: 
+	$(COMPOSE_CL2) down
 
-m1_shell_external:
-	$(DOCKER) run -it --net $(M1_NET_NAME) --link $(M1_CONTAINER) $(M1_IMAGE) $(M1_SHELL) $(M1_CONTAINER):$(M1_PORT) $(M1_DBNAME)
+c3_down:
+	$(COMPOSE_CL3) down
 
-m1_log:
-	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)
+cs_down:
+	$(COMPOSE_CLS) down
 
-m1_clean:
-	$(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port 27017 $(M1_DBNAME) --eval \
-	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
-	$(DOCKER) exec -it $(M1_CONTAINER)2 $(M1_SHELL) --port 27027 $(M1_DBNAME) --eval \
-	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
-	$(DOCKER) exec -it $(M1_CONTAINER)3 $(M1_SHELL) --port 27037  $(M1_DBNAME) --eval \
-	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
+srv_down:
+	# $(COMPOSE_SRV) down
 
-m1_1_stop:
-	$(COMPOSE) stop module1_1
+m11_log:
+	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)1
 
-m1_2_stop:
-	$(COMPOSE) stop module1_2
+m12_log:
+	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)2
 
-m1_3_stop:
-	$(COMPOSE) stop module1_3
+m13_log:
+	journalctl -f CONTAINER_NAME=$(M1_CONTAINER)3
+
+c1_stop:
+	$(COMPOSE_CL1) stop
+
+c2_stop:
+	$(COMPOSE_CL2) stop
+
+c3_stop:
+	$(COMPOSE_CL3) stop
+
+# CLEAN
 
 clean: m1_clean m2_clean m3_clean
 
-unsafe_clean:
-	$(RM) -r $(M1_CLEAN) $(M2_CLEAN) $(M3_CLEAN)
-
-m2_restart:
-	$(COMPOSE) restart module2
-
-m2_shell:
-	$(DOCKER) exec -it $(M2_CONTAINER) $(M2_SHELL) localhost $(M2_PORT) -k $(M2_DBNAME)
+m1_clean:
+	# Only one of them is primary: others fail trying to delete
+	$(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port $(M11_PORT) $(M1_DBNAME) --eval \
+	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
+	$(DOCKER) exec -it $(M1_CONTAINER)2 $(M1_SHELL) --port $(M12_PORT) $(M1_DBNAME) --eval \
+	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
+	$(DOCKER) exec -it $(M1_CONTAINER)3 $(M1_SHELL) --port $(M13_PORT) $(M1_DBNAME) --eval \
+	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
 
 m2_clean:
-	# probably TODO: not needed for now
-
-m2_shell_external:
-	$(DOCKER) run -it --net $(M2_NET_NAME) --link $(M2_CONTAINER) $(M2_IMAGE) $(M2_SHELL) $(M2_CONTAINER):$(M2_PORT) -k $(M2_DBNAME)
-
-m2_log:
-	# Somehow
-	$(DOCKER) logs $(M2_CONTAINER) | less
-
-m3_restart:
-	$(COMPOSE) restart module3
-
-m3_browser:
-	xdg-open http://localhost:$(M3_PORT_WEB)
-
-m3_shell:
-	$(DOCKER) exec -it $(M3_CONTAINER) $(M3_SHELL)
+	# probably TODO: no need for now
 
 m3_clean:
-	$(DOCKER) exec -it $(M3_CONTAINER) $(M3_SHELL) \
-	'match(n) detach delete n;'
+	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) 'match(n) detach delete n;' || :
+	# $(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL) 'match(n) detach delete n;' || :
+	# $(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL) 'match(n) detach delete n;' || :
+
+
+unsafe_clean:
+	$(RM) -r \
+	    $(M1_BASEDIR)/arb1 $(M1_BASEDIR)/arb2 \
+	    $(M1_CLEAN)1 $(M2_CLEAN)1 $(M3_CLEAN)1 \
+	    $(M1_CLEAN)2 $(M2_CLEAN)2 $(M3_CLEAN)2 \
+	    $(M1_CLEAN)3 $(M2_CLEAN)3 $(M3_CLEAN)3 \
+
+# SHELL and GUI
+
+m11_shell:
+	$(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port $(M11_PORT) $(M1_DBNAME)
+
+m12_shell:
+	$(DOCKER) exec -it $(M1_CONTAINER)2 $(M1_SHELL) --port $(M12_PORT) $(M1_DBNAME)
+
+m13_shell:
+	$(DOCKER) exec -it $(M1_CONTAINER)3 $(M1_SHELL) --port $(M13_PORT) $(M1_DBNAME)
+
+m21_shell:
+	$(DOCKER) exec -it $(M2_CONTAINER)1 $(M2_SHELL) localhost $(M21_PORT) -k $(M2_DBNAME)
+
+m22_shell:
+	$(DOCKER) exec -it $(M2_CONTAINER)2 $(M2_SHELL) localhost $(M22_PORT) -k $(M2_DBNAME)
+
+m23_shell:
+	$(DOCKER) exec -it $(M2_CONTAINER)3 $(M2_SHELL) localhost $(M23_PORT) -k $(M2_DBNAME)
+
+m31_shell:
+	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) # TODO ports
+
+m32_shell:
+	$(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL)
+
+m33_shell:
+	$(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL)
+
+m3_browser:
+	xdg-open http://localhost:$(M31_PORT_WEB)
+
+# LOG
+
+m21_log:
+	# Somehow
+	# $(DOCKER) logs $(M2_CONTAINER) | less
+	journalctl -f CONTAINER_NAME=$(M2_CONTAINER)1
+
+m22_log:
+	journalctl -f CONTAINER_NAME=$(M2_CONTAINER)2
+m23_log:
+	journalctl -f CONTAINER_NAME=$(M2_CONTAINER)3
+
+m31_log:
+	journalctl -f CONTAINER_NAME=$(M3_CONTAINER)1
+
+m32_log:
+	journalctl -f CONTAINER_NAME=$(M3_CONTAINER)2
+
+m33_log:
+	journalctl -f CONTAINER_NAME=$(M3_CONTAINER)3
+
+# UTILS
 
 backup: stop
 	rm -rf .backup
@@ -139,11 +221,8 @@ restore: stop
 	rm -r $(M1_BASEDIR) $(M2_BASEDIR) $(M3_BASEDIR)
 	cp -r .backup/$(M1_BASEDIR) .backup/$(M2_BASEDIR) .backup/$(M3_BASEDIR) . 
 
-
-
-
-#dont forget sudo
 check_ports:
+	#dont forget sudo
 	lsof -i | grep docker
 
 .PHONY: all up init_cassandra init_neo4j generate \

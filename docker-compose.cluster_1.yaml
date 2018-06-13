@@ -1,0 +1,84 @@
+# First Cluster
+
+version: "3"
+services:
+
+  module11:
+    container_name: mongoc1
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./m1_mongo/db1:/data/db
+        # - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+      - ./m1_mongo/configure-rs.js:/etc/configure-rs.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --replSet rs --port 27017 -v --bind_ip_all
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo1
+
+  module21:
+    hostname: cassandra1
+    container_name: cassandrac1
+    image: cassandra
+    expose:
+        - 7000
+        - 7001
+        - 7199
+        - 9042
+        - 9160
+    command: bash -c 'if [ -z "$$(ls -A /var/lib/cassandra/)" ] ; then sleep 0; fi && /docker-entrypoint.sh cassandra -f'
+    ports:
+        - "9042:9042"
+    volumes:
+      - ./m2_cassandra/db1:/var/lib/cassandra
+      - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+      - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    environment:
+        - CASSANDRA_DC=cluster1
+    # choice of snitch is important: https://hub.docker.com/_/cassandra/
+        - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+        - CASSANDRA_CLUSTER_NAME=cas_cluster
+        - CASSANDRA_SEEDS=cassandra1
+        - MAX_HEAP_SIZE=1024M
+        - HEAP_NEWSIZE=800M
+    logging:
+      driver: journald
+    networks:
+      net_cassandra:
+        aliases:
+          - cassandra1
+
+  module31:
+    container_name: neo4jc1
+    image: neo4j
+    ports:
+      - "7474:7474" # Web app (HTTP)
+      - "7687:7687" # Bolt
+    volumes:
+      - ./m3_neo4j/db1:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+      - ./m3_neo4j/neo4j1.conf:/conf/neo4j.conf
+    logging:
+      driver: journald
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j1
+
+networks:
+  net_mongo:
+    external:
+      name: db_net_mongo
+  net_cassandra:
+    external:
+      name: db_net_cassandra
+  net_neo4j:
+    external:
+      name: db_net_neo4j
