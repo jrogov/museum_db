@@ -1,0 +1,225 @@
+# TODO
+# mongo: logging from stdout to something BETTER
+# cassandra
+# neo4j
+#
+
+# Note: some ports (with TOCOMMENT) are exposed to ease server development,
+#       so server's jar is not to be packed for deploy for container
+#       First write server, then deploy it (and probably die)
+
+version: "3"
+services:
+
+  # # Server
+  # server:
+  #   image: openjdk:8-jdk-alpine
+  #   volumes:
+  #     # TODO
+  #     # ./server:
+  # networks:
+
+  module1_1:
+    container_name: mongoc1
+    image: mongo
+    ports:
+      - "27017:27017" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db1:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+      - ./m1_mongo/configure-rs.js:/etc/configure-rs.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27017
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo1   # host name to reach
+
+  module1_2:
+    container_name: mongoc2
+    image: mongo
+    ports:
+      - "27027:27027" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db2:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27027
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo2   # host name to reach
+
+  module1_3:
+    container_name: mongoc3
+    image: mongo
+    ports:
+      - "27037:27037" # TOCOMMENT
+    volumes:
+      - ./m1_mongo/db3:/data/db
+      - ./m1_mongo/mongod.conf:/etc/mongod.conf
+      - ./m1_mongo/schema.js:/docker-entrypoint-initdb.d/schema.js
+    environment:
+      MONGO_INITDB_DATABASE: museum
+    command: mongod --config /etc/mongod.conf --replSet rs --port 27037
+    logging:
+      driver: journald
+    networks:
+      net_mongo:
+        aliases:
+          - mongo3   # host name to reach
+
+  module2_1:
+    container_name: cassandrac1
+    image: cassandra
+    ports:
+        - "9042:9042" # TOCOMMENT
+      # - ""
+    volumes:
+      - ./m2_cassandra/db1:/var/lib/cassandra
+      - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+      - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    logging:
+      driver: journald
+    networks:
+      net_cassandra:
+        aliases:
+          - cassandra1
+
+    #   module2_2:
+    #     container_name: cassandrac2
+    #     image: cassandra
+    #     ports:
+    #         - "9142:9042" # TOCOMMENT
+    #       # - ""
+    #     volumes:
+    #       - ./m2_cassandra/db2:/var/lib/cassandra
+    #       - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+    #       - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    #     environment:
+    #         CASSANDRA_SEEDS: cassandra1
+    #     logging:
+    #       driver: journald
+    #     networks:
+    #       net_cassandra:
+    #         aliases:
+    #           - cassandra2
+    # 
+    #   module2_3:
+    #     container_name: cassandrac3
+    #     image: cassandra
+    #     ports:
+    #         - "9242:9042" # TOCOMMENT
+    #       # - ""
+    #     volumes:
+    #       - ./m2_cassandra/db3:/var/lib/cassandra
+    #       - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+    #       - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    #     environment:
+    #         CASSANDRA_SEEDS: cassandra1
+    #     logging:
+    #       driver: journald
+    #     networks:
+    #       net_cassandra:
+    #         aliases:
+    #           - cassandra3
+
+  module3_1:
+    container_name: neo4jc1
+    image: neo4j:3.3.1-enterprise
+    volumes:
+      - ./m3_neo4j/db1:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+        #- .em3_neo4j/neo4j1.conf:/conf/neo4j.conf
+    ports:
+      - 7474:7474
+      - 6477:6477
+      - 7687:7687
+        # - "7474:7474" # Web app (HTTP)
+        # - "7687:7687" # Bolt
+        # environment:
+        # - NEO4J_AUTH=neo4j/changeme
+        # - NEO4J_dbms_mode=CORE
+        # - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+        # - NEO4J_causal__clustering_expected__core__cluster__size=3
+        # - NEO4J_causal__clustering_initial__discovery__members=module3_1:5000,module3_2:5000,imodule3_3:5000
+        # - NEO4J_dbms_connector_http_listen__address=:7474
+        # - NEO4J_dbms_connector_https_listen__address=:6477
+        # - NEO4J_dbms_connector_bolt_listen__address=:7687
+    logging:
+      driver: journald
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j1
+
+    #   module3_2:
+    #     container_name: neo4jc2
+    #     image: neo4j:3.3.1-enterprise
+    #     volumes:
+    #       - ./m3_neo4j/db2:/data
+    #       - ./m3_neo4j/schema.cql:/import/schema.cql
+    #         #- ./m3_neo4j/neo4j2.conf:/conf/neo4j.conf
+    #     ports:
+    #       - 7475:7475
+    #       - 6478:6478      
+    #       - 7688:7688
+    #       # - "7474:7474" # Web app (HTTP)
+    #       # - "7787:7687" # Bolt
+    #     logging:
+    #       driver: journald
+    #     networks:
+    #       net_neo4j:
+    #         aliases:
+    #           - neo4j2
+    #     environment:
+    #         - NEO4J_AUTH=neo4j/changeme
+    #         - NEO4J_dbms_mode=CORE
+    #         - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    #         - NEO4J_causal__clustering_expected__core__cluster__size=3
+    #         - NEO4J_causal__clustering_initial__discovery__members=module3_1:5000,module3_2:5000,imodule3_3:5000
+    #         - NEO4J_dbms_connector_http_listen__address=:7475
+    #         - NEO4J_dbms_connector_https_listen__address=:6478
+    #         - NEO4J_dbms_connector_bolt_listen__address=:7688
+    #   
+    #   module3_3:
+    #     container_name: neo4jc3
+    #     image: neo4j:3.3.1-enterprise
+    #     volumes:
+    #       - ./m3_neo4j/db3:/data
+    #       - ./m3_neo4j/schema.cql:/import/schema.cql
+    #         #- ./m3_neo4j/neo4j3.conf:/conf/neo4j.conf
+    #     ports:
+    #       - 7476:7476
+    #       - 6479:6479      
+    #       - 7689:7689
+    #         # - "7474:7474" # Web app (HTTP)
+    #         #- "7887:7687" # Bolt
+    #     logging:
+    #       driver: journald
+    #     networks:
+    #       net_neo4j:
+    #         aliases:
+    #           - neo4j3
+    #     environment:
+    #         - NEO4J_AUTH=neo4j/neo4j
+    #         - NEO4J_dbms_mode=CORE
+    #         - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    #         - NEO4J_causal__clustering_expected__core__cluster__size=3
+    #         - NEO4J_causal__clustering_initial__discovery__members=module3_1:5000,module3_2:5000,imodule3_3:5000
+    #         - NEO4J_dbms_connector_http_listen__address=:7476
+    #         - NEO4J_dbms_connector_https_listen__address=:6479
+    #         - NEO4J_dbms_connector_bolt_listen__address=:7689
+  
+networks:
+  net_mongo:
+  net_cassandra:
+  net_neo4j:

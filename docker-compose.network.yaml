@@ -1,0 +1,17 @@
+# Networks definition 
+
+version: "3"
+services:
+    dummy:
+        container_name: network_dummy
+        image:
+            hello-world
+        networks:
+            net_mongo:
+            net_cassandra:
+            net_neo4j:
+
+networks:
+  net_mongo:
+  net_cassandra:
+  net_neo4j:

@@ -53,22 +53,31 @@ services:
         aliases:
           - cassandra3
 
-#   module33:
-#     container_name: neo4jc3
-#     image: neo4j
-#     ports:
-#       - "7674:7674" # Web app (HTTP)
-#       - "7887:7887" # Bolt
-#     volumes:
-#       - ./m3_neo4j/db3:/data
-#       - ./m3_neo4j/schema.cql:/import/schema.cql
-#       - ./m3_neo4j/neo4j3.conf:/conf/neo4j.conf
-#     logging:
-#       driver: journald
-#     networks:
-#       net_neo4j:
-#         aliases:
-#           - neo4j3
+  module33:
+    hostname: neo4j3
+    container_name: neo4jc3
+    image: neo4j:enterprise
+    ports:
+      - "7674:7674" # Web app (HTTP)
+      - "7887:7887" # Bolt
+    environment:
+        - NEO4J_AUTH=neo4j/changeme
+        - NEO4J_dbms_mode=CORE
+        - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes      
+        - NEO4J_causalClustering_expectedCoreClusterSize=3
+        - NEO4J_causalClustering_initialDiscoveryMembers=neo4j1:5000,neo4j2:5000,neo4j3:5000
+        - NEO4J_dbms_connector_http_listen__address=:7674
+        - NEO4J_dbms_connector_bolt_listen__address=:7887
+    volumes:
+      - ./m3_neo4j/db3:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+        # - ./m3_neo4j/neo4j3.conf:/conf/neo4j.conf
+    logging:
+      driver: journald
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j3
 
 networks:
   net_mongo:

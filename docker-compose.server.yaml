@@ -1,0 +1,14 @@
+# Backend 
+# Connects to databases
+
+version: "3"
+services:
+
+  # # Server
+  # server:
+  #   image: openjdk:8-jdk-alpine
+  #   volumes:
+  #     # TODO
+  #     # ./server:
+  # networks:
+

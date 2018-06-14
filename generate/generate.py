@@ -5,7 +5,7 @@ from gendata import *
 import requests
 from random import randint, random
 
-N = 100;
+N = 10;
 authors_num = exhibit_num = visitor_num = room_num = excursion_num = excursion_max_len = N
 
 # authors_num = 100

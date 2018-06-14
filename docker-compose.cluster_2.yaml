@@ -7,6 +7,9 @@ services:
     container_name: mongoc2
     image: mongo
     ports:
+        # It's important to use same ports: 
+        # otherwise, Spring freaks out that ports "inside network" differ
+        # from ports "exposed" to public
       - "27117:27117"
     volumes:
       - ./m1_mongo/db2:/data/db
@@ -53,22 +56,31 @@ services:
         aliases:
           - cassandra2
 
-#   module32:
-#     container_name: neo4jc2
-#     image: neo4j
-#     ports:
-#       - "7574:7574" # Web app (HTTP)
-#       - "7787:7787" # Bolt
-#     volumes:
-#       - ./m3_neo4j/db2:/data
-#       - ./m3_neo4j/schema.cql:/import/schema.cql
-#       - ./m3_neo4j/neo4j2.conf:/conf/neo4j.conf
-#     logging:
-#       driver: journald
-#     networks:
-#       net_neo4j:
-#         aliases:
-#           - neo4j2
+  module32:
+    hostname: neo4j2
+    container_name: neo4jc2
+    image: neo4j:enterprise
+    ports:
+      - "7574:7574" # Web app (HTTP)
+      - "7787:7787" # Bolt
+    environment:
+        - NEO4J_AUTH=neo4j/changeme
+        - NEO4J_dbms_mode=CORE
+        - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes      
+        - NEO4J_causalClustering_expectedCoreClusterSize=3
+        - NEO4J_causalClustering_initialDiscoveryMembers=neo4j1:5000,neo4j2:5000,neo4j3:5000
+        - NEO4J_dbms_connector_http_listen__address=:7574
+        - NEO4J_dbms_connector_bolt_listen__address=:7787
+    volumes:
+      - ./m3_neo4j/db2:/data
+      - ./m3_neo4j/schema.cql:/import/schema.cql
+        # - ./m3_neo4j/neo4j2.conf:/conf/neo4j.conf
+    logging:
+      driver: journald
+    networks:
+      net_neo4j:
+        aliases:
+          - neo4j2
 
 networks:
   net_mongo:

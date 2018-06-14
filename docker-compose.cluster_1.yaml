@@ -38,7 +38,7 @@ services:
         - "9042:9042"
     volumes:
       - ./m2_cassandra/db1:/var/lib/cassandra
-      - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+        #- ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql  # Called from Makefile (rule "init_cassandra")
       - ./m2_cassandra/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
     environment:
         - CASSANDRA_DC=cluster1
@@ -56,15 +56,24 @@ services:
           - cassandra1
 
   module31:
+    hostname: neo4j1
     container_name: neo4jc1
-    image: neo4j
+    image: neo4j:enterprise
     ports:
       - "7474:7474" # Web app (HTTP)
       - "7687:7687" # Bolt
     volumes:
       - ./m3_neo4j/db1:/data
       - ./m3_neo4j/schema.cql:/import/schema.cql
-      - ./m3_neo4j/neo4j1.conf:/conf/neo4j.conf
+        #- ./m3_neo4j/neo4j1.conf:/conf/neo4j.conf
+    environment:
+        - NEO4J_AUTH=neo4j/changeme
+        - NEO4J_dbms_mode=CORE
+        - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes      
+        - NEO4J_causalClustering_expectedCoreClusterSize=3
+        - NEO4J_causalClustering_initialDiscoveryMembers=neo4j1:5000,neo4j2:5000,neo4j3:5000
+        - NEO4J_dbms_connector_http_listen__address=:7474
+        - NEO4J_dbms_connector_bolt_listen__address=:7687
     logging:
       driver: journald
     networks:

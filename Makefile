@@ -21,6 +21,7 @@ M1_CONTAINER  = mongoc
 M1_DBNAME     = museum
 M1_SHELL      = mongo
 M1_NET_NAME   = $(PROJECT_NAME_LC)_net_mongo
+M1_GEN_FILE   = generate_mongo.js 
 M11_PORT      = 27017
 M12_PORT      = 27117
 M13_PORT      = 27217
@@ -31,6 +32,7 @@ M2_CONTAINER  = cassandrac
 M2_DBNAME     = museum
 M2_SHELL      = cqlsh
 M2_NET_NAME   = $(PROJECT_NAME_LC)_net_cassandra
+M2_GEN_FILE   = generate_cassandra.cql
 # Port for Native protocol clients
 M21_PORT      = 9042
 M22_PORT      = 9042 # 9142
@@ -42,7 +44,13 @@ M3_CONTAINER  = neo4jc
 M3_SHELL      = cypher-shell
 M3_SCHEMA     = $(M3_BASEDIR)/schema.cql
 M3_DBNAME     = museum
+M3_GEN_FILE   = generate_neo4j.cql
 M3_CLEAN      = $(M3_BASEDIR)/db
+M3_USERNAME   = neo4j
+M3_PASSWORD   = changeme
+M31_PORT      = 7687
+M32_PORT      = 7787
+M33_PORT      = 7887
 M31_PORT_WEB  = 7474
 M32_PORT_WEB  = 7574
 M33_PORT_WEB  = 7674
@@ -54,9 +62,13 @@ all: db_up init_mongo init_cassandra init_neo4j srv_up
 # GENERATE
 
 generate:
-	# nodejs generate/generate.js
-	cd generate && ./generate.py
-
+	@# Old method: through API
+	@# cd generate && ./generate.py
+	cd generate &&                                                                                                                    \
+	./generate_query.py &&                                                                                                            \
+	cat $(M1_GEN_FILE) | $(DOCKER) exec -i $(M1_CONTAINER)1 $(M1_SHELL) --port $(M11_PORT) $(M1_DBNAME) && echo 'Mongo Gen Done' &&                            \
+	cat $(M2_GEN_FILE) | $(DOCKER) exec -i $(M2_CONTAINER)1 $(M2_SHELL) localhost $(M21_PORT) -k $(M2_DBNAME) && echo 'Cas Gen Done' &&                      \
+	cat $(M3_GEN_FILE) | $(DOCKER) exec -i $(M3_CONTAINER)1 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M31_PORT) && echo 'Neo Gen Done'
 # UP
 
 db_up: net_up c1_up c2_up c3_up cs_up
@@ -85,7 +97,7 @@ init_mongo:
 	sleep 10 && $(DOCKER) exec -it $(M1_CONTAINER)1 $(M1_SHELL) --port $(M11_PORT) $(M1_DBNAME) /etc/configure-rs.js
 
 init_cassandra:
-	# no init for cassandra
+	cat ./m2_cassandra/scheme.cql | $(DOCKER) exec -i $(M2_CONTAINER)1 $(M2_SHELL) localhost $(M21_PORT) 
 
 init_neo4j:
 	# no init for neo4j
@@ -142,12 +154,14 @@ m1_clean:
 	    'db.getCollectionNames().map( (a) => db[a].deleteMany({}))' || :
 
 m2_clean:
-	# probably TODO: no need for now
+	$(DOCKER) exec -i $(M2_CONTAINER)1 $(M2_SHELL) localhost $(M21_PORT) -k $(M2_DBNAME) -e 'TRUNCATE relocation ; TRUNCATE visit ;' || : 
+	$(DOCKER) exec -i $(M2_CONTAINER)2 $(M2_SHELL) localhost $(M22_PORT) -k $(M2_DBNAME) -e 'TRUNCATE relocation ; TRUNCATE visit ;' || :
+	$(DOCKER) exec -i $(M2_CONTAINER)3 $(M2_SHELL) localhost $(M23_PORT) -k $(M2_DBNAME) -e 'TRUNCATE relocation ; TRUNCATE visit ;' || :
 
 m3_clean:
-	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) 'match(n) detach delete n;' || :
-	# $(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL) 'match(n) detach delete n;' || :
-	# $(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL) 'match(n) detach delete n;' || :
+	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M31_PORT) 'match(n) detach delete n;' || :
+	$(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M32_PORT) 'match(n) detach delete n;' || :
+	$(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M33_PORT) 'match(n) detach delete n;' || :
 
 
 unsafe_clean:
@@ -178,13 +192,13 @@ m23_shell:
 	$(DOCKER) exec -it $(M2_CONTAINER)3 $(M2_SHELL) localhost $(M23_PORT) -k $(M2_DBNAME)
 
 m31_shell:
-	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) # TODO ports
+	$(DOCKER) exec -it $(M3_CONTAINER)1 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M31_PORT)
 
 m32_shell:
-	$(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL)
+	$(DOCKER) exec -it $(M3_CONTAINER)2 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M32_PORT)
 
 m33_shell:
-	$(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL)
+	$(DOCKER) exec -it $(M3_CONTAINER)3 $(M3_SHELL) -u $(M3_USERNAME) -p $(M3_PASSWORD) -a localhost:$(M33_PORT)
 
 m3_browser:
 	xdg-open http://localhost:$(M31_PORT_WEB)

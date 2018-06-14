@@ -1,24 +1,21 @@
-CREATE KEYSPACE museum
-WITH replication = { 'class': 'SimpleStrategy', 'replication_factor' : 1};
+CREATE KEYSPACE IF NOT EXISTS museum
+WITH replication = { 'class' : 'NetworkTopologyStrategy', 'cluster1' : 3, 'cluster2' : 3, 'cluster3' : 3 };
 
 USE museum;
 
-CREATE TABLE moving(
-   move_id int PRIMARY KEY,
-   exhibit text,
-   pre_hall text,
-   post_hall text,
-   );
+CREATE TABLE relocation(
+    id text PRIMARY KEY,
+    exhibitid text,
+    fromroomid text,
+    toroomid text
+);
 
-CREATE TABLE visiting(
-   visit_id int PRIMARY KEY,
-   visiter text,
-   date timestamp,
-   type text,
-   price int,
-   excursion text,
-   );
+CREATE TABLE visit(
+    id text PRIMARY KEY,
+    visitorid text,
+    date text,
+    tickettype text,
+    price double,
+    excursionid text
+);
 
-
-// INSERT INTO moving (move_id, exhibit, pre_hall, post_hall) VALUES(?,?,?,?);
-// INSERT INTO visiting (visit_id, visiter, date, type, price, excursion) VALUES(?,?,?,?,?,?);

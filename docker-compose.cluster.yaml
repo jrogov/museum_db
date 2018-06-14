@@ -82,7 +82,6 @@ services:
     image: cassandra
     ports:
         - "9042:9042" # TOCOMMENT
-      # - ""
     volumes:
       - ./m2_cassandra/db:/var/lib/cassandra
       - ./m2_cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
@@ -112,6 +111,8 @@ services:
       # - "7473:7473" # Web app (HTTPS)
       - "7474:7474" # Web app (HTTP)
       - "7687:7687" # Bolt
+    logging:
+      driver: journald
     networks:
       net_neo4j:
         aliases:
